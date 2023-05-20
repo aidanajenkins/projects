@@ -1,1 +1,77 @@
+#!/usr/bin/env python3
+"""Methods II Final"""
 
+from ssl import ALERT_DESCRIPTION_BAD_CERTIFICATE_HASH_VALUE
+import numpy as np
+import pandas as pd
+import sklearn
+import matplotlib.pyplot as plt
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from nltk.corpus import stopwords
+import urllib.request
+import contractions
+import string as str
+import re
+import collections
+from collections import Counter
+from collections import defaultdict
+
+# scikit tutorial
+import sklearn
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn import preprocessing
+from sklearn.model_selection import train_test_split
+
+oedipus_url = "http://classics.mit.edu/Sophocles/oedipus.pl.txt"
+
+def get_data(url):
+    data = urllib.request.urlopen(url).read().decode('utf-8')
+    return data
+
+text = get_data(oedipus_url)
+
+# INSERT PREPROCESSING
+
+new_text = text.lower()
+new_text = re.sub(r'\d+', '', new_text)
+new_text = re.sub(r'[^\w\s]', '', new_text)
+new_text = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|^rt|http.+?', '', new_text)
+new_text = new_text.strip()
+# print(new_text)
+
+# Tokenize
+def word_tokenizer(text):
+    text = nltk.word_tokenize(new_text)
+    return text
+new_text = word_tokenizer(text)
+
+# Normalize
+filtered_text = [t for t in new_text if not t in stopwords.words("english")]
+
+# print(filtered_text)
+
+#def char_list(text):
+#    all_char_names = []
+#    for word in text:
+#        match = re.findall(r'\b[A-Z]{2,}\b', text)
+#        all_char_names.append(" ".join(match))
+#    return all_char_names
+#print(char_list(text)) ## prints long list of all uppercase words (only character names from speaker)
+
+
+# need to find way to make a set of individual characters, and use scikit learn to make a count of 
+# character vs # of mentions to choose most mentioned as a variable protagonist.
+
+#until that works will move on to just making the variable based off the individual play
+
+protagonist = "oedipus"
+
+
+# SKLEARN
+vectorizer = CountVectorizer(min_df=0, lowercase=False)
+vectorizer.fit(filtered_text)
+# print(vectorizer.vocabulary_)
+
+vectorizer.transform(filtered_text).toarray()
