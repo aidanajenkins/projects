@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Methods II Final"""
+from cgitb import small
+import joblib
+import re
+import string
+import numpy as np
+import pandas as pd
+import urllib.request
+import sklearn
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics import accuracy_score, cohen_kappa_score, f1_score, classification_report
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.naive_bayes import MultinomialNB
+import numpy as np 
+import pandas as pd 
+import re
+import nltk 
+import matplotlib.pyplot as plt
+
+oedipus_url = "http://classics.mit.edu/Sophocles/oedipus.pl.txt"
+
+def get_data(url):
+    data = urllib.request.urlopen(url).read().decode('utf-8')
+    return data
+
+data = get_data(oedipus_url)
+
+# Sample
+data = re.sub("THE END", '', data) 
+data = re.sub(r'\d+', '', data)
+data = re.sub(r'[^\w\s]', '', data)
+# data = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z \n])|(\w+:\/\/\S+)|^rt|http.+?', '', data) # A. \n included
+data = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z\s \t])|(\w+:\/\/\S+)|^rt|http.+?', '', data) # B. \n discluded
+data = data.strip("")
+
+# A. \n included
+# data = data[1402:68185] # removes extra before and after text
+# data_sample = data[62578:66783] # just the end of the text
+# small_sample = data_sample[0:500] # for training
+
+# B. \n discluded
+data = re.sub("Copyright" + ".*", "", data) # removes after text
+data_sample = data[62200:68185] # just the end of the text
+small_sample = data[2000:68184] # lazy way to not have to change all labels
+
+# Tokenize
+def word_tokenizer(text):
+    text = nltk.word_tokenize(text)
+    return text
+small_sample_tok = word_tokenizer(small_sample)
+
+speaker = re.findall(r'[A-Z]{2,}', small_sample)
+# print(len(speaker)) # 32
+speaker_set = set(speaker)
+print("Cast: ", speaker_set) # 6
+
+def most_frequent(List):
+    counter = 0
+    num = List[0]
+    for i in List:
+        freq = List.count(i)
+        if(freq> counter):
+            counter = freq
+            num = i
+    return num
+most_freq_char = most_frequent(speaker)
+print("Protagonist: ",most_freq_char)
+
+small_sample = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z]\s)|(\w+:\/\/\S+)|^rt|http.+?', ' ', small_sample)
+small_sample_lst = small_sample.split("\n")
+# print(small_sample_lst[1:])
+
+# line = small_sample_lst[1] # 1 line out of the list of lines
+# print(line) # OEDIPUS Ah me what words to accost 
+# line_split = line.split() # tokenizes the line
+# line = " ".join(line_split[1:]) #joins the line after the 1st index
+# print(line) # Ah me what words to accost
+
+lines_in_play = [] 
+speaker_for_line = []
+for every_line in small_sample_lst:
+    line_split = every_line.split()
+    line = " ".join(line_split[1:])
+    lines_in_play.append(line)
+    speaker = " ".join(line_split[:1])
+    speaker_for_line.append(speaker)
+lines_in_play = [i.lower() for i in lines_in_play]
+# print(len(lines_in_play)) # 30 sample, 456 data
+# print(len(speaker_for_line)) # 30 sample, 456 data
+
+data = list(zip(speaker_for_line, lines_in_play)) # tuple / merge
+df = pd.DataFrame(data, columns=['Speaker', 'Line'])
+# print(df) # it works! 
+
+
+
