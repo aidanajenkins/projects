@@ -19,6 +19,8 @@ import re
 import nltk 
 import matplotlib.pyplot as plt
 
+# 1 Who is the protagonist?
+
 oedipus_url = "http://classics.mit.edu/Sophocles/oedipus.pl.txt"
 
 def get_data(url):
@@ -105,6 +107,8 @@ for line in lines_in_play:
         else:
             protag_mention.append(0)
 
+# 2 Deadly Ending?
+
 # My dictionary:
 death_dict = ["death", "dead", "die", "dies", "fallen", "deceased", "decease", "kill", 
     "murder", "killed", "murdered", "slain", "lost", "gone", "passed", 
@@ -136,5 +140,6 @@ data = list(zip(speaker_for_line, lines_in_play, protag_val, protag_mention, dea
 df = pd.DataFrame(data, columns=['Speaker', 'Line', 'Protagonist', 'Protagonist Mention', 'Death Mention'])
 # print(df) # it works! 
 
-print(df.loc[df['Death Mention'] == 1])
+# print(df.loc[df['Death Mention'] == 1])
 
+# 3 Sentiment Analysis
