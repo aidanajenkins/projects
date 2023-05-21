@@ -54,7 +54,7 @@ small_sample_tok = word_tokenizer(small_sample)
 speaker = re.findall(r'[A-Z]{2,}', small_sample)
 # print(len(speaker)) # 32
 speaker_set = set(speaker)
-print("Cast: ", speaker_set) # 6
+# print("Cast: ", speaker_set) # 6
 
 def most_frequent(List):
     counter = 0
@@ -66,7 +66,7 @@ def most_frequent(List):
             num = i
     return num
 most_freq_char = most_frequent(speaker)
-print("Protagonist: ",most_freq_char)
+# print("Protagonist: ",most_freq_char)
 
 small_sample = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z]\s)|(\w+:\/\/\S+)|^rt|http.+?', ' ', small_sample)
 small_sample_lst = small_sample.split("\n")
@@ -80,19 +80,61 @@ small_sample_lst = small_sample.split("\n")
 
 lines_in_play = [] 
 speaker_for_line = []
+protag_val = []
 for every_line in small_sample_lst:
     line_split = every_line.split()
     line = " ".join(line_split[1:])
     lines_in_play.append(line)
     speaker = " ".join(line_split[:1])
     speaker_for_line.append(speaker)
+    if speaker == most_freq_char:
+        protag_val.append(1)
+    else:
+        protag_val.append(0)
+
 lines_in_play = [i.lower() for i in lines_in_play]
 # print(len(lines_in_play)) # 30 sample, 456 data
 # print(len(speaker_for_line)) # 30 sample, 456 data
 
-data = list(zip(speaker_for_line, lines_in_play)) # tuple / merge
-df = pd.DataFrame(data, columns=['Speaker', 'Line'])
+protag_mention = []
+for line in lines_in_play:
+    lines = line.split()
+    for i in lines:
+        if i in most_freq_char.lower():
+            protag_mention.append(1)
+        else:
+            protag_mention.append(0)
+
+# My dictionary:
+death_dict = ["death", "dead", "die", "dies", "fallen", "deceased", "decease", "kill", 
+    "murder", "killed", "murdered", "slain", "lost", "gone", "passed", 
+    "demise", "demised", "with god", "at peace", "stab", "stabbed", "gauge", "gauged", "pain"]
+
+death_dict_match = [] # death dict relevant to play
+for line in lines_in_play:
+    lines = line.split()
+    for i in lines:
+        # print(i)
+        if i in death_dict:
+            death_dict_match.append(i)
+death_dict = set(death_dict_match) # Words from my dictionary in text
+
+death_mention_match = [] # binary 
+for i in lines_in_play:
+    for d in death_dict:
+        if d in i.split():
+            death_mention_match.append(1)
+            
+        else:
+            death_mention_match.append(0)
+            
+# print("length: ",len(death_mention_match)) 
+# print("sample: ",death_mention_match)  
+pd.set_option('display.max_rows', None)
+
+data = list(zip(speaker_for_line, lines_in_play, protag_val, protag_mention, death_mention_match)) # tuple / merge
+df = pd.DataFrame(data, columns=['Speaker', 'Line', 'Protagonist', 'Protagonist Mention', 'Death Mention'])
 # print(df) # it works! 
 
-
+print(df.loc[df['Death Mention'] == 1])
 
