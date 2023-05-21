@@ -1,28 +1,28 @@
 #!/usr/bin/env python3
 """Methods II Final"""
 
-from ssl import ALERT_DESCRIPTION_BAD_CERTIFICATE_HASH_VALUE
+from cgitb import small
+import joblib
+import re
+import string
+
 import numpy as np
 import pandas as pd
-import sklearn
-import matplotlib.pyplot as plt
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
-from nltk.corpus import stopwords
 import urllib.request
-import contractions
-import string as str
-import re
-import collections
-from collections import Counter
-from collections import defaultdict
 
-# scikit tutorial
+
 import sklearn
+from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn import preprocessing
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, cohen_kappa_score, f1_score, classification_report
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.naive_bayes import MultinomialNB
+
+import numpy as np 
+import pandas as pd 
+import re
+import nltk 
+import matplotlib.pyplot as plt
 
 oedipus_url = "http://classics.mit.edu/Sophocles/oedipus.pl.txt"
 
@@ -30,48 +30,90 @@ def get_data(url):
     data = urllib.request.urlopen(url).read().decode('utf-8')
     return data
 
-text = get_data(oedipus_url)
+data = get_data(oedipus_url)
+# data = np.loadtxt(data, delimiter=',', skiprows=1, dtype=str)
+# print(type(data))
 
-# INSERT PREPROCESSING
+# Sample
+data = re.sub("THE END", '', data) 
+data = re.sub(r'\d+', '', data)
+data = re.sub(r'[^\w\s]', '', data)
+# data = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z \n])|(\w+:\/\/\S+)|^rt|http.+?', '', data) # A. \n included
+data = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z\s \t])|(\w+:\/\/\S+)|^rt|http.+?', '', data) # B. \n discluded
+data = data.strip("")
 
-new_text = text.lower()
-new_text = re.sub(r'\d+', '', new_text)
-new_text = re.sub(r'[^\w\s]', '', new_text)
-new_text = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|^rt|http.+?', '', new_text)
-new_text = new_text.strip()
-# print(new_text)
+# A. \n included
+# data = data[1402:68185] # removes extra before and after text
+# data_sample = data[62578:66783] # just the end of the text
+# small_sample = data_sample[0:500] # for training
+
+# B. \n discluded
+data = re.sub("Copyright" + ".*", "", data) # removes after text
+data_sample = data[62200:68185] # just the end of the text
+small_sample = data_sample[300:] # for training
 
 # Tokenize
 def word_tokenizer(text):
-    text = nltk.word_tokenize(new_text)
+    text = nltk.word_tokenize(text)
     return text
-new_text = word_tokenizer(text)
+small_sample_tok = word_tokenizer(small_sample)
 
-# Normalize
-filtered_text = [t for t in new_text if not t in stopwords.words("english")]
+speaker = re.findall(r'[A-Z]{2,}', small_sample)
+# print(len(speaker)) # 32
+speaker_set = set(speaker)
+# print(speaker_set) # 6
 
-# print(filtered_text)
-
-#def char_list(text):
-#    all_char_names = []
-#    for word in text:
-#        match = re.findall(r'\b[A-Z]{2,}\b', text)
-#        all_char_names.append(" ".join(match))
-#    return all_char_names
-#print(char_list(text)) ## prints long list of all uppercase words (only character names from speaker)
-
-
-# need to find way to make a set of individual characters, and use scikit learn to make a count of 
-# character vs # of mentions to choose most mentioned as a variable protagonist.
-
-#until that works will move on to just making the variable based off the individual play
-
-protagonist = "oedipus"
+def most_frequent(List):
+    counter = 0
+    num = List[0]
+    for i in List:
+        freq = List.count(i)
+        if(freq> counter):
+            counter = freq
+            num = i
+    return num
+most_freq_char = most_frequent(speaker)
+# print(most_freq_char)
 
 
-# SKLEARN
-vectorizer = CountVectorizer(min_df=0, lowercase=False)
-vectorizer.fit(filtered_text)
-# print(vectorizer.vocabulary_)
 
-vectorizer.transform(filtered_text).toarray()
+# lines = re.findall(r'[a-z]{2,}', small_sample)
+# # print(len(lines)) # 995
+
+# for i in small_sample_tok:
+#     if i in speaker_set:
+#         continue
+
+small_sample = re.sub(r'(@\[A-Za-z0-9]+)|([^0-9A-Za-z]\s)|(\w+:\/\/\S+)|^rt|http.+?', ' ', small_sample)
+small_sample_lst = small_sample.split("\n")
+# print(small_sample_lst[1:])
+
+
+# line = small_sample_lst[1] # 1 line out of the list of lines
+# print(line) # OEDIPUS Ah me what words to accost 
+# line_split = line.split() # tokenizes the line
+# line = " ".join(line_split[1:]) #joins the line after the 1st index
+# print(line) # Ah me what words to accost
+
+lines_in_play = [] 
+speaker_for_line = []
+for every_line in small_sample_lst:
+    line_split = every_line.split()
+    line = " ".join(line_split[1:])
+    lines_in_play.append(line)
+    speaker = " ".join(line_split[:1])
+    speaker_for_line.append(speaker)
+lines_in_play = [i.lower() for i in lines_in_play]
+print(len(lines_in_play)) # 30
+# print(len(speaker_for_line)) # 30
+
+data = list(zip(speaker_for_line, lines_in_play)) # tuple / merge
+df = pd.DataFrame(data, columns=['Speaker', 'Line'])
+# print(df) # it works! 
+
+
+# sklearn.feature_extraction.text.CountVectorizer
+
+# count_vect = CountVectorizer()
+# X_train_counts = count_vect.fit_transform(df)
+# print(X_train_counts.shape)
