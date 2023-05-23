@@ -19,7 +19,7 @@ import re
 import nltk 
 import matplotlib.pyplot as plt
 
-# 1 Who is the protagonist?
+# 1 Who is the protagonist? #
 
 oedipus_url = "http://classics.mit.edu/Sophocles/oedipus.pl.txt"
 
@@ -107,7 +107,9 @@ for line in lines_in_play:
         else:
             protag_mention.append(0)
 
-# 2 Deadly Ending?
+
+
+# 2 Deadly Ending? #
 
 # My dictionary:
 death_dict = ["death", "dead", "die", "dies", "fallen", "deceased", "decease", "kill", 
@@ -142,4 +144,17 @@ df = pd.DataFrame(data, columns=['Speaker', 'Line', 'Protagonist', 'Protagonist 
 
 # print(df.loc[df['Death Mention'] == 1])
 
-# 3 Sentiment Analysis
+
+
+# 3 Sentiment Analysis #
+
+df['scores'] = df['Line'].apply(lambda Line:
+sid.polarity_scores(Line))
+
+df['compound'] = df['scores'].apply(lambda score_dict:
+score_dict['compound'])
+
+df['comp_score'] = df['compound'].apply(lambda c:
+'pos' if c >=0 else 'neg')
+
+print(df.head())
