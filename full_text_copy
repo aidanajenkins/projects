@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Methods II Final"""
 from cgitb import small
-import joblib
 import re
-import string
 import numpy as np
 import pandas as pd
 import urllib.request
@@ -17,9 +15,13 @@ import numpy as np
 import pandas as pd 
 import re
 import nltk 
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+sid = SentimentIntensityAnalyzer()
 import matplotlib.pyplot as plt
 
-# 1 Who is the protagonist? #
+
+
+# 1 Who is the protagonist?
 
 oedipus_url = "http://classics.mit.edu/Sophocles/oedipus.pl.txt"
 
@@ -107,9 +109,7 @@ for line in lines_in_play:
         else:
             protag_mention.append(0)
 
-
-
-# 2 Deadly Ending? #
+# 2 Deadly Ending?
 
 # My dictionary:
 death_dict = ["death", "dead", "die", "dies", "fallen", "deceased", "decease", "kill", 
@@ -141,12 +141,10 @@ pd.set_option('display.max_rows', None)
 data = list(zip(speaker_for_line, lines_in_play, protag_val, protag_mention, death_mention_match)) # tuple / merge
 df = pd.DataFrame(data, columns=['Speaker', 'Line', 'Protagonist', 'Protagonist Mention', 'Death Mention'])
 # print(df) # it works! 
-
 # print(df.loc[df['Death Mention'] == 1])
+# print(df['Death Mention'].value_counts())
 
-
-
-# 3 Sentiment Analysis #
+# 3 Sentiment Analysis
 
 df['scores'] = df['Line'].apply(lambda Line:
 sid.polarity_scores(Line))
@@ -157,4 +155,12 @@ score_dict['compound'])
 df['comp_score'] = df['compound'].apply(lambda c:
 'pos' if c >=0 else 'neg')
 
-print(df.head())
+pd.set_option('display.max_columns', None)
+print(df)
+first_four_fifths = df[:344]
+last_fifth = df[344:]
+ending = df[-50:]
+print("\nScore for the entire play: \n",df['comp_score'].value_counts())
+print("\n Score for the first 4/5ths of the play: \n",first_four_fifths['comp_score'].value_counts())
+print("\nScore for the last fifth of the play: \n",last_fifth['comp_score'].value_counts())
+print("\nScore for the ending of the play: \n",ending['comp_score'].value_counts())
