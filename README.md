@@ -4,4 +4,5 @@ The objective is to create a classifier to parse written plays, determine the pr
 whether the protagnist dies, and whether the overall sentiment of the play is a tragedy, 
 or whether the play has a tragic ending.
 
-See the PDF for fuller details
+See the writeup for fuller details
+full_text_copy.py is the classifier
